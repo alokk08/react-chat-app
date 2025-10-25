@@ -21,25 +21,44 @@ export const createChatSlice = (set, get) => ({
   setSelectedChatMessages: (selectedChatMessages) => set({ selectedChatMessages }),
   setDirectMessagesContacts: (directMessagesContacts) => set({ directMessagesContacts }),
   updateUnreadCount: (senderId, count) => {
-    const contacts = get().directMessagesContacts;
-    const updatedContacts = contacts.map(contact => {
-      if (contact._id === senderId) {
-        return { ...contact, unreadCount: count };
-      }
-      return contact;
-    });
+  set(state => ({
+    directMessagesContacts: state.directMessagesContacts.map(c =>
+      c._id === senderId ? { ...c, unreadCount: count } : c
+    )
+  }));
+},
+  setUnreadCount: (contactId, count) => {
+    const updatedContacts = get().directMessagesContacts.map(contact =>
+      contact._id === contactId
+        ? { ...contact, unreadCount: count }
+        : contact
+    );
     set({ directMessagesContacts: updatedContacts });
   },
+
+  // Also add a reset when user opens chat ↓
   resetUnreadCount: (contactId) => {
-    const contacts = get().directMessagesContacts;
-    const updatedContacts = contacts.map(contact => {
-      if (contact._id === contactId) {
-        return { ...contact, unreadCount: 0 };
-      }
-      return contact;
-    });
+    const updatedContacts = get().directMessagesContacts.map(contact =>
+      contact._id === contactId
+        ? { ...contact, unreadCount: 0 }
+        : contact
+    );
     set({ directMessagesContacts: updatedContacts });
   },
+  updateChannelUnreadCount: (channelId, count) => {
+  set(state => ({
+    channels: state.channels.map(ch =>
+      ch._id === channelId ? { ...ch, unreadCount: count } : ch
+    )
+  }));
+},
+resetChannelUnreadCount: (channelId) => {
+  set(state => ({
+    channels: state.channels.map(ch =>
+      ch._id === channelId ? { ...ch, unreadCount: 0 } : ch
+    )
+  }));
+},
   addChannel:(channel)=>{
     const channels = get().channels
     set({channels: [channel,...channels]})

@@ -152,12 +152,27 @@ const setUpSocket = (server) => {
                 const memberSocketId = userSocketMap.get(member._id.toString())
                 if (memberSocketId){
                     io.to(memberSocketId).emit("recieve-channel-message", finalData)
+                    // increment unread count if member is not sender
+if (member._id.toString() !== sender) {
+  io.to(memberSocketId).emit("channelUnreadCount", {
+    channelId: channel._id,
+    countIncrement: 1
+  });
+}
+
                 }
             })
             const adminSocketId = userSocketMap.get(channel.admin._id.toString())
                 if (adminSocketId){
                     io.to(adminSocketId).emit("recieve-channel-message", finalData)
                 }
+                if (adminSocketId && channel.admin._id.toString() !== sender) {
+  io.to(adminSocketId).emit("channelUnreadCount", {
+    channelId: channel._id,
+    countIncrement: 1
+  });
+}
+
         }
     }
 

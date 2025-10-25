@@ -1,7 +1,7 @@
 import { apiClient } from "@/lib/api-client";
 import { useAppStore } from "@/store";
 import { useSocket } from "@/context/SocketContext";
-import { GET_ALL_MESSAGES_ROUTE, GET_CHANNEL_MESSAGES, HOST } from "@/utils/constants";
+import { GET_ALL_MESSAGES_ROUTE, GET_CHANNEL_MESSAGES, HOST, MARK_READ_ROUTE } from "@/utils/constants";
 import moment from "moment/moment";
 import { useEffect, useRef, useState } from "react";
 import {MdFolderZip} from "react-icons/md"
@@ -43,10 +43,10 @@ const MessageContainer = () => {
                             senderId: selectedChatData._id,
                             readerId: userInfo.id
                         });
-                        // Also update via API
-                        await apiClient.post('/api/messages/mark-as-read', {
+                        {/*// Also update via API
+                        await apiClient.post(MARK_READ_ROUTE, {
                             senderId: selectedChatData._id
-                        });
+                        });*/}
                     }
                 }
             } catch (error) {
@@ -93,10 +93,10 @@ const MessageContainer = () => {
                 // Reset unread count in store
                 useAppStore.getState().resetUnreadCount(selectedChatData._id);
 
-                // Also update via API for persistence
-                await apiClient.post('/api/messages/mark-as-read', {
+                {/*// Also update via API for persistence
+                await apiClient.post(MARK_READ_ROUTE, {
                     senderId: selectedChatData._id
-                });
+                });*/}
             }
         };
         markMessagesAsRead();

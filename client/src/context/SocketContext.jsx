@@ -41,16 +41,24 @@ export const SocketProvider = ({ children }) => {
         }
     } else {
         // We're the recipient
-        if (selectedChatType === "contact" && selectedChatData._id === message.sender._id) {
-            addMessage(message);
-            // Mark as read immediately if we're viewing the chat
-            socket.current.emit('markMessagesAsRead', {
-                senderId: message.sender._id,
-                readerId: userInfo.id
-            });
-        }
+    if (selectedChatType === "contact" && selectedChatData._id === message.sender._id) {
+        addMessage(message);
+        // Mark messages as read because chat is open
+        socket.current.emit('markMessagesAsRead', {
+            senderId: message.sender._id,
+            readerId: userInfo.id
+        });
+    } else {
+        // Only add unread to list if chat is NOT open
+        addContactsInDMContacts(message);
+        const state = useAppStore.getState();
+state.updateUnreadCount(
+  message.sender._id,
+  (state.directMessagesContacts.find(c => c._id === message.sender._id)?.unreadCount || 0) + 1
+);
+
     }
-    addContactsInDMContacts(message);
+}
   };
 
   const handleReceiveChannelMessage = (message) => {
@@ -60,7 +68,6 @@ export const SocketProvider = ({ children }) => {
     }
     addChannelInChannelList(message)
   }
-
 
   socket.current.on("recieveMessage", handleReceiveMessage);
   socket.current.on("recieve-channel-message", handleReceiveChannelMessage);
@@ -88,18 +95,26 @@ export const SocketProvider = ({ children }) => {
     }
     socket.current.on('messageBlocked', handleMessageBlocked);
 
-    // Handle unread count updates
-    const handleUnreadCount = (data) => {
-        const state = useAppStore.getState();
-        state.updateUnreadCount(data.senderId, data.count);
-    }
-    socket.current.on('unreadCount', handleUnreadCount);
+      const handleChannelUnreadCount = (data) => {
+  const state = useAppStore.getState();
+  const { channelId, countIncrement } = data;
+  const existing = state.channels.find(ch => ch._id === channelId)?.unreadCount || 0;
+  state.updateChannelUnreadCount(channelId, existing + countIncrement);
+};
+
+socket.current.on("channelUnreadCount", handleChannelUnreadCount);
+    // 👇 NEW: Handle messagesRead event to reset unread count locally
+const handleMessagesRead = (data) => {
+  const state = useAppStore.getState();
+  state.resetUnreadCount(data.by);
+};
+socket.current.on("messagesRead", handleMessagesRead);
 
             return () => {
-                socket.current.disconnect();
-                console.log("Socket disconnected");
+                socket.current.off("messagesRead", handleMessagesRead);
+                socket.current.off("channelUnreadCount", handleChannelUnreadCount)
             }
-        }
+        }   
 
     }, [userInfo]);
 

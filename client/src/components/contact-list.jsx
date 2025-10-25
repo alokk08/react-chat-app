@@ -13,20 +13,30 @@ const ContactList = ({ contacts, isChannel=false }) => {
         selectedChatType,
         setSelectedChatType,
         setSelectedChatMessages,
+        resetUnreadCount,
     } = useAppStore();
 
     const navigate = useNavigate();
 
     const handleClick = (contact) => {
-        const type = isChannel ? "channel" : "contact";
-        setSelectedChatType(type);
-        setSelectedChatData(contact);
-        if(selectedChatData && selectedChatData._id === contact._id){
-            setSelectedChatMessages([]);
-        }
-        // Update the URL
-        navigate(`/chat/${type}/${contact._id}`);
-    }
+  const type = isChannel ? "channel" : "contact";
+  setSelectedChatType(type);
+  setSelectedChatData(contact);
+
+  if (!isChannel) {
+  resetUnreadCount(contact._id);
+} else {
+  useAppStore.getState().resetChannelUnreadCount(contact._id);
+}
+
+
+  if(selectedChatData && selectedChatData._id === contact._id){
+      setSelectedChatMessages([]);
+  }
+
+  navigate(`/chat/${type}/${contact._id}`);
+};
+
 
     return (
   <div className="mt-5">
@@ -66,15 +76,24 @@ const ContactList = ({ contacts, isChannel=false }) => {
             {isChannel && <div className="bg-[#ffffff22] h-10 w-10 flex items-center justify-center rounded-full">#</div>}
             {
                 isChannel ? (
+                  <div className="flex items-center justify-between w-full mr-4">
                   <span>{contact.name}</span>
+                  {contact.unreadCount > 0 && (
+  <span className="bg-[#8417ff] text-white text-xs px-2 py-[1px] rounded-full ml-auto">
+    {contact.unreadCount}
+  </span>
+)}
+</div>
+                  
                 ) : (
                   <div className="flex items-center justify-between w-full mr-4">
                     <span>{contact.firstName ? `${contact.firstName} ${contact.lastName}` : contact.email}</span>
                     {contact.unreadCount > 0 && (
-                      <Badge variant="default" className="bg-[#8417ff]">
-                        {contact.unreadCount}
-                      </Badge>
-                    )}
+  <span className="bg-[#8417ff] text-white text-xs px-2 py-[1px] rounded-full ml-auto">
+    {contact.unreadCount}
+  </span>
+)}
+
                   </div>
                 )
             }

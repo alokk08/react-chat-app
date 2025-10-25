@@ -2,46 +2,15 @@ import { useEffect } from "react";
 import NewDM from "./components/new-dm";
 import ProfileInfo from "./components/profile-info";
 import { apiClient } from "@/lib/api-client";
-import { GET_DM_CONTACTS_ROUTE, GET_USERS_CHANNEL_ROUTE } from "@/utils/constants";
+import { GET_DM_CONTACTS_ROUTE, GET_UNREAD_COUNT_ROUTE, GET_USERS_CHANNEL_ROUTE } from "@/utils/constants";
 import { useAppStore } from "@/store";
 import ContactList from "@/components/contact-list";
 import CreateChannel from "./components/create-channel";
 
 const ContactsContainer = () => {
 
-  const {setDirectMessagesContacts, directMessagesContacts, channels, setChannels} = useAppStore();
+  const {setDirectMessagesContacts, directMessagesContacts, channels, setChannels, setUnreadCount, userInfo } = useAppStore();
 
-  useEffect(() => {
-    // Function to refresh unread counts
-    const refreshUnreadCounts = async () => {
-      const contacts = directMessagesContacts;
-      if (contacts && contacts.length > 0) {
-        const updatedContacts = await Promise.all(contacts.map(async contact => {
-          try {
-            const unreadResponse = await apiClient.post('/api/messages/get-unread-count', {
-              senderId: contact._id
-            }, { withCredentials: true }); // Add withCredentials
-            return {
-              ...contact,
-              unreadCount: unreadResponse.data.count || 0
-            };
-          } catch (error) {
-            console.error('Error refreshing unread count:', error);
-            return contact; // Keep existing contact data on error
-          }
-        }));
-        if (updatedContacts.length > 0) {
-          setDirectMessagesContacts(updatedContacts);
-        }
-      }
-    };
-
-    // Set up periodic refresh
-    const refreshInterval = setInterval(refreshUnreadCounts, 30000); // every 30 seconds
-
-    // Clear interval on unmount
-    return () => clearInterval(refreshInterval);
-  }, [directMessagesContacts]);
 
   useEffect(() => {
     const getContacts = async () => {
@@ -58,23 +27,24 @@ const ContactsContainer = () => {
 
           // Merge new contacts with existing ones, preserving unread counts
           const contactsWithCounts = await Promise.all(currentContacts.map(async contact => {
-            const existingContact = existingContactsMap.get(contact._id);
-            try {
-              const unreadResponse = await apiClient.post('/api/messages/get-unread-count', {
-                senderId: contact._id
-              }, { withCredentials: true });
-              return {
-                ...contact,
-                unreadCount: unreadResponse.data.count || 0
-              };
-            } catch (error) {
-              console.error('Error fetching unread count:', error);
-              return {
-                ...contact,
-                unreadCount: existingContact?.unreadCount || 0
-              };
-            }
-          }));
+  const existingContact = existingContactsMap.get(contact._id);
+  try {
+    const unreadResponse = await apiClient.post(GET_UNREAD_COUNT_ROUTE, {
+      senderId: contact._id
+    }, { withCredentials: true });
+
+    setUnreadCount(contact._id, unreadResponse.data.count || 0);
+    return contact;
+
+  } catch (error) {
+    console.error('Error fetching unread count:', error);
+    return {
+      ...contact,
+      unreadCount: existingContact?.unreadCount || 0
+    };
+  }
+}));
+
 
           if (contactsWithCounts.length > 0) {
             setDirectMessagesContacts(contactsWithCounts);

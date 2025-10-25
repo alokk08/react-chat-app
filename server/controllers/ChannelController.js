@@ -22,7 +22,7 @@ export const createChannel = async (request, response, next) => {
         // Only add admin as initial member, send requests to others
         const newChannel = new Channel({
             name,
-            members: [userId],
+            members: [],
             admin: userId
         });
         await newChannel.save();
