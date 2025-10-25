@@ -2,6 +2,8 @@ import { useAppStore } from "@/store";
 import { Avatar, AvatarImage } from "./ui/avatar";
 import { getColor } from "@/lib/utils";
 import { HOST } from "@/utils/constants";
+import { useNavigate } from "react-router-dom";
+import { Badge } from "./ui/badge";
 
 const ContactList = ({ contacts, isChannel=false }) => {
     
@@ -13,13 +15,17 @@ const ContactList = ({ contacts, isChannel=false }) => {
         setSelectedChatMessages,
     } = useAppStore();
 
+    const navigate = useNavigate();
+
     const handleClick = (contact) => {
-        if (isChannel) setSelectedChatType("channel");
-        else setSelectedChatType("contact");
+        const type = isChannel ? "channel" : "contact";
+        setSelectedChatType(type);
         setSelectedChatData(contact);
         if(selectedChatData && selectedChatData._id === contact._id){
             setSelectedChatMessages([]);
         }
+        // Update the URL
+        navigate(`/chat/${type}/${contact._id}`);
     }
 
     return (
@@ -59,7 +65,18 @@ const ContactList = ({ contacts, isChannel=false }) => {
             )}
             {isChannel && <div className="bg-[#ffffff22] h-10 w-10 flex items-center justify-center rounded-full">#</div>}
             {
-                isChannel ? <span>{contact.name}</span> : <span>{contact.firstName ? `${contact.firstName} ${contact.lastName}` : contact.email}</span>
+                isChannel ? (
+                  <span>{contact.name}</span>
+                ) : (
+                  <div className="flex items-center justify-between w-full mr-4">
+                    <span>{contact.firstName ? `${contact.firstName} ${contact.lastName}` : contact.email}</span>
+                    {contact.unreadCount > 0 && (
+                      <Badge variant="default" className="bg-[#8417ff]">
+                        {contact.unreadCount}
+                      </Badge>
+                    )}
+                  </div>
+                )
             }
           </div>
         </div>

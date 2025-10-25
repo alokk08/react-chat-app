@@ -5,11 +5,12 @@ import { HOST, LOGOUT_ROUTE } from "@/utils/constants";
 import { Avatar, AvatarImage } from "@radix-ui/react-avatar"
 import { FiEdit2 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
-import { IoPowerSharp } from "react-icons/io5";
+import { IoPowerSharp,IoNotificationsOutline  } from "react-icons/io5";
 import { apiClient } from "@/lib/api-client";
+import RequestBadge from "@/components/RequestBadge";
 
 const ProfileInfo = () => {
-    const {userInfo, setUserInfo} = useAppStore();
+    const {userInfo, setUserInfo, totalRequests, setTotalRequests} = useAppStore();
     const navigate = useNavigate();
 
     const logOut = async() => {
@@ -23,9 +24,12 @@ const ProfileInfo = () => {
             console.log(error);
         }
     }
+    const requests = () => {
+    navigate(`/requests`)
+  }
 
-    return <div className="absolute bottom-0 h-16 flex items-center justify-between px-10 w-full bg-[#2a2b33]">
-        <div className="flex items-center justify-center gap-3">
+    return <div className="absolute bottom-0 h-16 flex items-center justify-between px-3 w-full bg-[#2a2b33]">
+        <div className="flex items-center justify-center">
             <div className="w-12 h-12 relative flex items-center justify-center">
     <Avatar className="h-12 w-12 rounded-full overflow-hidden">
         {userInfo.image ? (
@@ -46,7 +50,7 @@ const ProfileInfo = () => {
     </Avatar>
 </div>
 
-            <div>
+            <div className="pl-2">
                     {
                         userInfo.firstName && userInfo.lastName ? `${userInfo.firstName} ${userInfo.lastName}` : ""
                     }
@@ -75,6 +79,27 @@ const ProfileInfo = () => {
                 </TooltipContent>
             </Tooltip>
             </TooltipProvider>
+            <TooltipProvider>
+  <Tooltip>
+    <TooltipTrigger>
+      <div className="relative cursor-pointer" onClick={requests}>
+        <IoNotificationsOutline className="text-yellow-400 text-xl font-medium" />
+        {/*
+        totalRequests > 0 && (
+          <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold h-5 w-5 flex items-center justify-center rounded-full">
+            {totalRequests}
+          </span>
+        )*/}
+        <RequestBadge/>
+      </div>
+    </TooltipTrigger>
+
+    <TooltipContent className="bg-[#1c1b1e] text-white border-none">
+      Requests
+    </TooltipContent>
+  </Tooltip>
+</TooltipProvider>
+
         </div>
     </div>
 }

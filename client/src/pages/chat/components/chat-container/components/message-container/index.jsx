@@ -1,5 +1,6 @@
 import { apiClient } from "@/lib/api-client";
 import { useAppStore } from "@/store";
+import { useSocket } from "@/context/SocketContext";
 import { GET_ALL_MESSAGES_ROUTE, GET_CHANNEL_MESSAGES, HOST } from "@/utils/constants";
 import moment from "moment/moment";
 import { useEffect, useRef, useState } from "react";
@@ -25,7 +26,6 @@ const MessageContainer = () => {
     const [imageURL, setImageURL] = useState(null)
 
     useEffect(() => {
-
         const getMessages = async () => {
             try {
                 const response = await apiClient.post(
@@ -33,9 +33,22 @@ const MessageContainer = () => {
                     {id: selectedChatData._id},
                     {withCredentials: true});
 
-                    if(response.data.messages){
-                        setSelectedChatMessages(response.data.messages);
+                if(response.data.messages){
+                    setSelectedChatMessages(response.data.messages);
+                    
+                    // Mark messages as read immediately when loading chat
+                    if (selectedChatType === "contact") {
+                        const socket = useSocket();
+                        socket.emit('markMessagesAsRead', {
+                            senderId: selectedChatData._id,
+                            readerId: userInfo.id
+                        });
+                        // Also update via API
+                        await apiClient.post('/api/messages/mark-as-read', {
+                            senderId: selectedChatData._id
+                        });
                     }
+                }
             } catch (error) {
                 console.log(error);
             }
@@ -54,7 +67,7 @@ const MessageContainer = () => {
                 console.log(error);
             }
         }
-        if(selectedChatData._id){
+        if(selectedChatData?._id){
             if(selectedChatType==="contact") getMessages();
             else if (selectedChatType==="channel") getChannelMessages()
         }
@@ -65,6 +78,29 @@ const MessageContainer = () => {
             scrollRef.current.scrollIntoView({behavior: "smooth"});
         }
     },[selectedChatMessages])
+
+    useEffect(() => {
+        // Mark messages as read when viewing chat
+        const markMessagesAsRead = async () => {
+            if (selectedChatType === "contact" && selectedChatData?._id) {
+                const socket = useSocket();
+                // Mark messages as read via socket to ensure real-time updates
+                socket.emit('markMessagesAsRead', {
+                    senderId: selectedChatData._id,
+                    readerId: userInfo.id
+                });
+
+                // Reset unread count in store
+                useAppStore.getState().resetUnreadCount(selectedChatData._id);
+
+                // Also update via API for persistence
+                await apiClient.post('/api/messages/mark-as-read', {
+                    senderId: selectedChatData._id
+                });
+            }
+        };
+        markMessagesAsRead();
+    }, [selectedChatData, selectedChatType]);
 
     const checkIfImage = (filePath) => {
         const imageRedex = /\.(jpg|jpeg|png|gif|bmp|tiff|webp|svg|ico|heic|heif)$/i;
@@ -170,13 +206,17 @@ const MessageContainer = () => {
                                                 <AvatarFallback className={`uppercase h-8 w-8 text-lg flex items-center justify-center rounded-full
                                                 ${getColor(message.sender.color)}`
                                                }>
-                                                {message.sender.firstName
-                                                ? message.sender.firstName.split("").shift()
-                                                :message.sender.email.split("").shift()
+                                                {message.sender?.firstName
+                                                    ? message.sender.firstName.charAt(0)
+                                                    : message.sender?.email?.charAt(0) || '?'
                                                 }
                                                 </AvatarFallback>
                                         </Avatar>
-                                        <span className="text-sm text-white/60">{`${message.sender.firstName} ${message.sender.lastName}`}</span>
+                                        <span className="text-sm text-white/60">
+                                            {message.sender?.firstName
+                                                ? `${message.sender.firstName} ${message.sender.lastName || ''}`
+                                                : message.sender?.email || 'Unknown User'}
+                                        </span>
                                         <span className="text-sx text-white/60">
                                             {moment(message.timestamp).format("LT")}
                                         </span>
@@ -243,8 +283,15 @@ const MessageContainer = () => {
 
 
     const renderMessages = () => {
+        if (!selectedChatMessages || selectedChatMessages.length === 0) {
+            return <div className="text-center text-gray-500 my-2">No messages yet</div>;
+        }
+
         let lastDate = null;
         return selectedChatMessages.map((message, index) => {
+            if (!message || !message.sender) {
+                return null; // Skip invalid messages
+            }
             const messageDate = moment(message.timestamp).format("YYYY-MM-DD");
             const showDate = messageDate !== lastDate;
             lastDate = messageDate;

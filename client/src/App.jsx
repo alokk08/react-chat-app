@@ -2,11 +2,15 @@ import { BrowserRouter, Routes, Route, Navigate} from "react-router-dom"
 import Auth from "./pages/auth"
 import Chat from "./pages/chat"
 import Profile from "./pages/profile"
+import ContactProfile from "./pages/profile/ContactProfile"
+import ChannelProfile from "./pages/channel/ChannelProfile"
 import { useAppStore } from "@/store"
 import { useEffect } from "react"
 import { apiClient } from "./lib/api-client"
 import { GET_USER_INFO } from "./utils/constants"
 import { useState } from 'react';
+import { RequestProvider } from "./context/RequestContext";
+import RequestPage from "./pages/requests";
 
 const PrivateRoute = ({children}) => {
   const {userInfo} = useAppStore();
@@ -53,15 +57,20 @@ const App = () => {
 
   return (
     <BrowserRouter>
-    <Routes>
-      <Route path="/auth" 
-      element={
-      <AuthRoute>
-        <Auth />
-      </AuthRoute>
+    <RequestProvider>
+      <Routes>
+        <Route path="/auth" 
+        element={
+        <AuthRoute>
+          <Auth />
+        </AuthRoute>
+        } />
+      <Route path="/chat" element={
+      <PrivateRoute>
+        <Chat />
+      </PrivateRoute>
       } />
-      <Route path="/chat"
-      element={
+      <Route path="/chat/:type/:id" element={
       <PrivateRoute>
         <Chat />
       </PrivateRoute>
@@ -72,8 +81,27 @@ const App = () => {
         <Profile />
       </PrivateRoute>
       } />
+      <Route path="/profile/:id"
+      element={
+        <PrivateRoute>
+          <ContactProfile />
+        </PrivateRoute>
+      } />
+      <Route path="/channel/:id"
+      element={
+        <PrivateRoute>
+          <ChannelProfile />
+        </PrivateRoute>
+      } />
+      <Route path="/requests"
+      element={
+        <PrivateRoute>
+          <RequestPage />
+        </PrivateRoute>
+      } />
       <Route path="*" element={<Navigate to="/auth"/>} />
-    </Routes>
+      </Routes>
+    </RequestProvider>
     </BrowserRouter>
   )
 }

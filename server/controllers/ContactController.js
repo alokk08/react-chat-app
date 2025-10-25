@@ -33,19 +33,42 @@ export const searchContacts = async (request, response, next) => {
 export const getContactsForDMList = async (request, response, next) => {
     try {
         let {userId} = request;
-
         userId = new mongoose.Types.ObjectId(userId);
+
+        // First get all accepted requests
+        const acceptedRequests = await mongoose.model('Request').find({
+            $or: [
+                { sender: userId, status: 'accepted' },
+                { receiver: userId, status: 'accepted' }
+            ],
+            type: 'contact'
+        });
+
+        // Get all the user IDs from accepted requests
+        const acceptedUserIds = acceptedRequests.map(req => 
+            req.sender.equals(userId) ? req.receiver : req.sender
+        );
 
         const contacts = await Message.aggregate([
             {
                 $match:{
-                    $or: [
-                        {sender: userId},
-                        {recipient: userId}
+                    $and: [
+                        {
+                            $or: [
+                                {sender: userId},
+                                {recipient: userId}
+                            ]
+                        },
+                        {
+                            $or: [
+                                {sender: { $in: acceptedUserIds }},
+                                {recipient: { $in: acceptedUserIds }}
+                            ]
+                        }
                     ]
                 }
-            }
-            ,{
+            },
+            {
                 $sort: { timestamp: -1 }
             },
             {
@@ -85,7 +108,7 @@ export const getContactsForDMList = async (request, response, next) => {
             {
                 $sort: { lastMessageTime: -1 }
             }
-        ])
+        ]);
         return response.status(200).json({ contacts });
     } catch (error) {
         console.log(error);
@@ -104,6 +127,21 @@ export const getAllContacts = async (request, response, next) => {
             value: user._id,
         }))
         return response.status(200).json({ contacts });
+    } catch (error) {
+        console.log(error);
+        return response.status(500).send("Internal Server Error");
+    }
+};
+
+export const getContactById = async (request, response, next) => {
+    try {
+        const { id } = request.params;
+        if(!id) return response.status(400).json({ message: "id is required" });
+
+        const user = await User.findById(id).select("firstName lastName email image color bio createdAt _id");
+        if(!user) return response.status(404).json({ message: "User not found" });
+
+        return response.status(200).json({ user });
     } catch (error) {
         console.log(error);
         return response.status(500).send("Internal Server Error");

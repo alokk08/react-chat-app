@@ -23,3 +23,8 @@ export const CHANNEL_ROUTES = "/api/channel";
 export const CREATE_CHANNEL_ROUTE = `${CHANNEL_ROUTES}/create-channel`;
 export const GET_USERS_CHANNEL_ROUTE = `${CHANNEL_ROUTES}/get-user-channels`
 export const GET_CHANNEL_MESSAGES = `${CHANNEL_ROUTES}/get-channel-messages`
+
+export const REQUEST_ROUTES = "/api/requests";
+export const GET_REQUESTS_ROUTE = `${REQUEST_ROUTES}/get-requests`;
+export const ACCEPT_REQUESTS_ROUTE = `${REQUEST_ROUTES}/accept`;
+export const DECLINE_REQUESTS_ROUTE = `${REQUEST_ROUTES}/decline`;

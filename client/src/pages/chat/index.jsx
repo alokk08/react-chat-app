@@ -1,6 +1,6 @@
 import React from 'react'
 import { useAppStore } from '@/store';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
 import ContactsContainer from './components/contacts-container';
@@ -11,13 +11,18 @@ const Chat = () => {
 
   const {
     userInfo, 
-    selectedChatType, 
+    selectedChatType,
+    setSelectedChatData,
+    setSelectedChatType,
     isUploading,
     isDownloading,
     fileUploadProgress,
-    fileDownloadProgress
+    fileDownloadProgress,
+    directMessagesContacts,
+    channels
   } = useAppStore();
   const navigate = useNavigate();
+  const { type, id } = useParams();
 
   useEffect(() => {
     if (!userInfo.profileSetup) {
@@ -25,6 +30,31 @@ const Chat = () => {
       navigate('/profile');
     }
   }, [userInfo, navigate]);
+
+  useEffect(() => {
+    if (type && id) {
+      setSelectedChatType(type);
+      // We need to fetch the chat data based on the ID
+      const fetchChatData = async () => {
+        try {
+          let data;
+          if (type === 'contact') {
+            // Get contact from directMessagesContacts
+            data = directMessagesContacts.find(contact => contact._id === id);
+          } else if (type === 'channel') {
+            // Get channel from channels
+            data = channels.find(channel => channel._id === id);
+          }
+          if (data) {
+            setSelectedChatData(data);
+          }
+        } catch (error) {
+          console.error('Error fetching chat data:', error);
+        }
+      };
+      fetchChatData();
+    }
+  }, [type, id, setSelectedChatType, setSelectedChatData, directMessagesContacts, channels]);
 
   return(
   <div className='flex h-[100vh] text-white overflow-hidden'>

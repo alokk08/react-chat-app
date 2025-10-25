@@ -9,6 +9,8 @@ export const createChatSlice = (set, get) => ({
   fileUploadProgress:0,
   fileDownloadProgress:0,
   channels: [],
+  totalRequests:2,
+  setTotalRequests:(totalRequests)=>set({totalRequests}),
   setChannels: (channels)=>set({channels}),
   setIsUploading: (isUploading)=>set({isUploading}),
   setIsDownloading: (isDownloading)=>set({isDownloading}),
@@ -18,6 +20,26 @@ export const createChatSlice = (set, get) => ({
   setSelectedChatData: (selectedChatData) => set({ selectedChatData }),
   setSelectedChatMessages: (selectedChatMessages) => set({ selectedChatMessages }),
   setDirectMessagesContacts: (directMessagesContacts) => set({ directMessagesContacts }),
+  updateUnreadCount: (senderId, count) => {
+    const contacts = get().directMessagesContacts;
+    const updatedContacts = contacts.map(contact => {
+      if (contact._id === senderId) {
+        return { ...contact, unreadCount: count };
+      }
+      return contact;
+    });
+    set({ directMessagesContacts: updatedContacts });
+  },
+  resetUnreadCount: (contactId) => {
+    const contacts = get().directMessagesContacts;
+    const updatedContacts = contacts.map(contact => {
+      if (contact._id === contactId) {
+        return { ...contact, unreadCount: 0 };
+      }
+      return contact;
+    });
+    set({ directMessagesContacts: updatedContacts });
+  },
   addChannel:(channel)=>{
     const channels = get().channels
     set({channels: [channel,...channels]})
@@ -65,13 +87,15 @@ export const createChatSlice = (set, get) => ({
     const index = dmContacts.findIndex((contact)=>contact._id===fromId)
     console.log({data, index, dmContacts, userId, message, fromData})
     if(index !== -1 && index!==undefined){
-      console.log("in if condition")
+      // Existing contact - move to top
       dmContacts.splice(index, 1)
       dmContacts.unshift(data)
+      set({directMessagesContacts: dmContacts})
     } else {
-      console.log("in else condition")
-      dmContacts.unshift(data)
+      // Do not add new contacts on incoming socket message. Contacts should only be added
+      // via accepted requests / initial fetch from server (get-contacts-for-dm).
+      // If needed, we could fetch contact details here, but skip to avoid exposing pending users.
+      console.log('Incoming message from non-DM-contact; ignoring for DM list until accepted.');
     }
-    set({directMessagesContacts: dmContacts})
     }
 })
