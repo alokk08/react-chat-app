@@ -17,6 +17,7 @@ const Profile = () => {
   const {userInfo, setUserInfo} = useAppStore();
   const [firstName, setfirstName] = useState("")
   const [lastName, setlastName] = useState("")
+  const [username, setUsername] = useState("")
   const [image, setimage] = useState(null)
   const [hovered, sethovered] = useState(false)
   const [selectedColor, setselectedColor] = useState(0)
@@ -24,6 +25,7 @@ const Profile = () => {
 
   useEffect(()=>{
     if(userInfo.profileSetup){
+      setUsername(userInfo.username)
       setfirstName(userInfo.firstName);
       setlastName(userInfo.lastName);
       setselectedColor(userInfo.color);
@@ -42,6 +44,10 @@ const Profile = () => {
       toast.error("Last name is required")
       return false
     }
+    if(!username){
+      toast.error("Username is required")
+      return false
+    }
     return true
   }
 
@@ -50,7 +56,7 @@ const Profile = () => {
       try{
         const response = await apiClient.post(
           UPDATE_PROFILE_ROUTE,
-          {firstName, lastName, color: selectedColor},
+          {username, firstName, lastName, color: selectedColor},
           {withCredentials: true}
         );
         if(response.status===200 && response.data){
@@ -168,6 +174,15 @@ const Profile = () => {
             disabled
             value={userInfo.email}
             className="rounded-lg p-6 bg-[#2c2e3b] border-none"
+            />
+          </div>
+          <div className='w-full'>
+            <Input
+            placeholder="Username"
+            type="text"
+            onChange={(e) => setUsername(e.target.value)}
+            value={username}
+            className="rounded-lg p-6 bg-[#2c2e3b] border-2 border-transparent focus:border-white outline-none"
             />
           </div>
           <div className='w-full'>

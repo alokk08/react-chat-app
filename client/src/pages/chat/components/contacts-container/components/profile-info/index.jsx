@@ -50,10 +50,18 @@ const ProfileInfo = () => {
     </Avatar>
 </div>
 
-            <div className="pl-2">
+            <div className="pl-2 flex-col">
+                <div>
                     {
                         userInfo.firstName && userInfo.lastName ? `${userInfo.firstName} ${userInfo.lastName}` : ""
                     }
+                </div>
+                <div className="text-xs">
+                    @
+                    {
+                        userInfo.username ? `${userInfo.username}` : ""
+                    }
+                </div>
             </div>
         </div>
         <div className="flex gap-5 ">

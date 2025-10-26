@@ -59,11 +59,11 @@ const ContactProfile = () => {
             </div>
             <div>
               <h2 className="text-2xl font-semibold">
-                {user.firstName ? `${user.firstName} ${user.lastName || ''}` : user.email}
+                {user.firstName ? `${user.firstName} ${user.lastName || ''}` : user.username}
               </h2>
-              <p className="text-sm text-neutral-400">{user.email}</p>
+              <p className="text-sm text-neutral-400">{user.username? user.username : user.email}</p>
               {user.bio && <p className="mt-4 text-white/80">{user.bio}</p>}
-              <div className="mt-4 text-sm text-neutral-400">Joined: {new Date(user.createdAt).toLocaleDateString()}</div>
+              {/*<div className="mt-4 text-sm text-neutral-400">Joined: {new Date(user.createdAt).toLocaleDateString()}</div>*/}
             </div>
           </div>
         )}

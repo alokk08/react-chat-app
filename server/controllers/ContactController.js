@@ -2,33 +2,32 @@ import mongoose, { Mongoose } from "mongoose";
 import User from "../models/UserModel.js";
 import Message from "../models/MessagesModel.js";
 
-export const searchContacts = async (request, response, next) => {
-    try {
-        const { searchTerm } = request.body;
-        if (searchTerm===undefined || searchTerm === null) {
-            return response.status(400).json({ message: "Search term is required" });
-        }
+export const searchContacts = async (req, res, next) => {
+  try {
+    const { searchTerm } = req.body;
+    const term = typeof searchTerm === "string" ? searchTerm.trim() : ""; // ✅ fix here
 
-
-        const sanitizedSearchTerm = searchTerm.replace(
-            /[.*+?^${}()|[\]\\]/g, '\\$&'); // Escape special characters
-        const regex = new RegExp(sanitizedSearchTerm, 'i'); // Case-insensitive search
-
-        const contacts = await User.find({
-            $and: [
-                { _id: {$ne: request.userId} },
-                {
-                    $or: [{ firstName: regex }, { lastName: regex }, { email: regex }]
-                }
-            ]
-        })
-
-        return response.status(200).json({ contacts });
-    } catch (error) {
-        console.log(error);
-        return response.status(500).send("Internal Server Error");
+    if (term.length === 0) {
+      return res.status(200).json({ contacts: [] });
     }
+
+    // your search logic (example)
+    const contacts = await User.find({
+      $or: [
+        { firstName: { $regex: term, $options: "i" } },
+        { lastName: { $regex: term, $options: "i" } },
+        { email: { $regex: term, $options: "i" } },
+        { username: { $regex: term, $options: "i" } },
+      ],
+    });
+
+    res.status(200).json({ contacts });
+  } catch (error) {
+    next(error);
+  }
 };
+
+
 
 export const getContactsForDMList = async (request, response, next) => {
     try {
@@ -98,6 +97,7 @@ export const getContactsForDMList = async (request, response, next) => {
                 $project: {
                     _id: 1,
                     lastMessageTime: 1,
+                    username:"$contactInfo.username",
                     email: "$contactInfo.email",
                     firstName: "$contactInfo.firstName",
                     lastName: "$contactInfo.lastName",
@@ -120,7 +120,7 @@ export const getAllContacts = async (request, response, next) => {
     try {
         const users = await User.find(
             {_id: {$ne: request.userId}},
-            "firstName lastName _id email"
+            "username firstName lastName _id email"
         );
         const contacts = users.map((user)=>({
             label: user.firstName ? `${user.firstName} ${user.lastName}` : user.email,
@@ -138,7 +138,7 @@ export const getContactById = async (request, response, next) => {
         const { id } = request.params;
         if(!id) return response.status(400).json({ message: "id is required" });
 
-        const user = await User.findById(id).select("firstName lastName email image color bio createdAt _id");
+        const user = await User.findById(id).select("username firstName lastName email image color bio createdAt _id");
         if(!user) return response.status(404).json({ message: "User not found" });
 
         return response.status(200).json({ user });

@@ -130,6 +130,7 @@ const MessageContainer = () => {
         setIsDownloading(false)
         setFileDownloadProgress(0)
     }
+    
 
     const renderDMMessage = (message) => (
 <div className={`${
@@ -212,11 +213,24 @@ const MessageContainer = () => {
                                                 }
                                                 </AvatarFallback>
                                         </Avatar>
-                                        <span className="text-sm text-white/60">
+                                        <div className="pl-2 flex-col">
+                <div>
+                    <span className="text-sm text-white/60">
                                             {message.sender?.firstName
                                                 ? `${message.sender.firstName} ${message.sender.lastName || ''}`
                                                 : message.sender?.email || 'Unknown User'}
                                         </span>
+                </div>
+                <div className="text-xs">
+
+                    <span className=" text-white/60">
+                                            {message.sender?.username
+                                                ? `@${message.sender.username}`
+                                                : message.sender?.email || 'Unknown User'}
+                                        </span>
+                </div>
+            </div>
+                                        
                                         <span className="text-sx text-white/60">
                                             {moment(message.timestamp).format("LT")}
                                         </span>

@@ -68,6 +68,7 @@ export const login = async (request, response, next) => {
         response.status(200).json({
             user: {
                 id: user._id,
+                username: user.username,
                 email: user.email,
                 profileSetup: user.profileSetup,
                 firstName: user.firstName,
@@ -91,6 +92,7 @@ export const getUserInfo = async (request, response, next) => {
         
         response.status(200).json({
                 id: userData._id,
+                username: userData.username,
                 email: userData.email,
                 profileSetup: userData.profileSetup,
                 firstName: userData.firstName,
@@ -107,12 +109,13 @@ export const getUserInfo = async (request, response, next) => {
 export const updateProfile = async (request, response, next) => {
     try {
         const {userId} = request;  
-        const { firstName, lastName, color } = request.body;
+        const { username, firstName, lastName, color } = request.body;
         if(!firstName || !lastName || color === undefined) {
             return response.status(400).json({ message: "Firstname, lastName and color is required" });
         }  
         
         const userData = await User.findByIdAndUpdate(userId,{
+            username,
             firstName,
             lastName,
             color,
@@ -121,6 +124,7 @@ export const updateProfile = async (request, response, next) => {
         
         return response.status(200).json({
                 id: userData._id,
+                username: userData.username,
                 email: userData.email,
                 profileSetup: userData.profileSetup,
                 firstName: userData.firstName,

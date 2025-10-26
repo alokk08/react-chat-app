@@ -54,9 +54,12 @@ const ChatHeader = () => {
                                     className={`uppercase h-12 w-12 text-lg border-[1px] flex items-center justify-center rounded-full
                                     ${getColor(selectedChatData?.color || 0)}`}
                                 >
-                                    {selectedChatData?.firstName
+
+
+                    {selectedChatData?.firstName
                                         ? selectedChatData.firstName.charAt(0)
-                                        : selectedChatData?.email?.charAt(0) || '?'}
+                                        : ""}
+                                    
                                 </div>
                             )}
                         </Avatar>
@@ -68,11 +71,22 @@ const ChatHeader = () => {
                     {selectedChatType === "channel" ? (
                         <span>{selectedChatData?.name || 'Unnamed Channel'}</span>
                     ) : (
-                        <span>
+                        <div className='flex-col'>
+                        <div>
+                            <span>
                             {selectedChatData?.firstName
                                 ? `${selectedChatData.firstName} ${selectedChatData.lastName || ''}`
                                 : selectedChatData?.email || 'Unknown Contact'}
                         </span>
+                            </div>
+                        <div>
+                        <span className="text-xs">
+                            {selectedChatData?.username
+                                ? `${selectedChatData.username}`
+                                : selectedChatData?.email || 'Unknown Contact'}
+                        </span>
+                        </div>
+                        </div>
                     )}
                 </div>
             </div>
